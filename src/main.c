@@ -85,7 +85,7 @@ static int cmd_get(config_t *cfg, const char *query)
     }
 
     int n = json_object_array_length(loras);
-    const char *best_name = NULL;
+    char *best_name = NULL;
     int best_score = 0;
 
     for (int i = 0; i < n; i++) {
@@ -94,30 +94,32 @@ static int cmd_get(config_t *cfg, const char *query)
         int score = name_matches(name, query);
         if (score > best_score) {
             best_score = score;
-            best_name = name;
+            free(best_name);
+            best_name = strdup(name);
         }
     }
 
+    json_object_put(loras);
+
     if (!best_name) {
         fprintf(stderr, "error: no LoRA matching '%s' found\n", query);
-        json_object_put(loras);
         return 1;
     }
-
-    json_object_put(loras);
 
     printf("LoRA: %s\n", best_name);
 
     json_object *meta = api_get_metadata(cfg->url, cfg->apikey, best_name);
     if (!meta) {
         fprintf(stderr, "error: no metadata found for %s\n", best_name);
+        free(best_name);
         return 1;
     }
 
     printf("Trigger words:\n");
-    trigger_list_t triggers = trigger_extract(meta);
+    trigger_list_t triggers = trigger_extract(meta, best_name);
     trigger_list_print(&triggers);
     trigger_list_free(&triggers);
+    free(best_name);
     json_object_put(meta);
     return 0;
 }

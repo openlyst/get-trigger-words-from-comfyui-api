@@ -6,6 +6,7 @@
 typedef struct {
     char *word;
     int count;
+    int priority;
 } trigger_word_t;
 
 typedef struct {
@@ -15,9 +16,9 @@ typedef struct {
 } trigger_list_t;
 
 /* Extract trigger words from a lora metadata object.
- * Looks at ss_tag_frequency and explicit trigger word fields.
- * Returns a trigger_list_t sorted by frequency (descending). */
-trigger_list_t trigger_extract(json_object *metadata);
+ * lora_name is the filename (e.g. "Bambi_il.safetensors") used as fallback.
+ * Returns a trigger_list_t sorted by priority then frequency. */
+trigger_list_t trigger_extract(json_object *metadata, const char *lora_name);
 
 /* Free a trigger_list_t and all its strings. */
 void trigger_list_free(trigger_list_t *list);
